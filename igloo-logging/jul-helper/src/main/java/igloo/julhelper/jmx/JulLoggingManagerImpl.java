@@ -12,13 +12,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
-
-import org.slf4j.LoggerFactory;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import igloo.julhelper.api.JulLoggingManager;
 
@@ -27,8 +23,6 @@ import igloo.julhelper.api.JulLoggingManager;
  * {@link #loggers} consistency.
  */
 public class JulLoggingManagerImpl implements JulLoggingManager {
-
-	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JulLoggingManagerImpl.class);
 
 	/**
 	 * A set of well-known JUL logger names. Used to conditionally apply  {@link #setLevelIfWellKnown(String, String)}
@@ -50,8 +44,10 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 */
 	private final Set<Logger> loggers = ConcurrentHashMap.newKeySet();
 
-	public JulLoggingManagerImpl() {
-		this(null);
+	private final JulLoggingConfigurator julLoggingConfigurator;
+
+	public JulLoggingManagerImpl(String julKnownLoggersResourcePath) {
+		this(julKnownLoggersResourcePath, new JulLoggingConfigurator());
 	}
 
 	/**
@@ -62,8 +58,10 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 * @param julKnownLoggersResourcePath a resource path to load well-known JUL logger names. The resource must exists.
 	 *        Use null to skip well-known logger names loading.
 	 */
-	public JulLoggingManagerImpl(String julKnownLoggersResourcePath) {
+	public JulLoggingManagerImpl(String julKnownLoggersResourcePath, JulLoggingConfigurator julLoggingConfigurator) {
 		super();
+		this.julLoggingConfigurator = julLoggingConfigurator;
+		
 		julLevelMapping.put("ALL", Level.FINEST);
 		julLevelMapping.put("TRACE", Level.FINEST);
 		julLevelMapping.put("DEBUG", Level.FINE);
@@ -83,7 +81,7 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 		if (resourceOptional.isPresent()) {
 			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 			Supplier<Scanner> supplier = () -> new Scanner(classLoader.getResourceAsStream(resourceOptional.get()), StandardCharsets.UTF_8);
-			updateJulKnownLoggers(julKnownLoggersResourcePath, supplier, false);
+			julLoggingConfigurator.updateJulKnownLoggers(julKnownLoggersResourcePath, supplier, false, julKnownLoggers);
 		}
 	}
 
@@ -112,12 +110,7 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 */
 	@Override
 	public synchronized void setLevel(final String name, final String level) {
-		Logger logger = getLogger(name);
-		logger.setLevel(parseLevel(level));
-		clearHandlers(logger);
-		logger.setUseParentHandlers(false);
-		logger.addHandler(new SLF4JBridgeHandler());
-		loggers.add(logger);
+		julLoggingConfigurator.setLevel(name, level, loggers, julLevelMapping);
 	}
 
 	/**
@@ -125,7 +118,7 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 */
 	@Override
 	public synchronized void setLevelIfWellKnown(String name, String level) {
-		if (matchJulKnownLoggers(name)) {
+		if (julLoggingConfigurator.matchJulKnownLoggers(name, julKnownLoggers)) {
 			setLevel(name, level);
 		}
 	}
@@ -135,7 +128,7 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 */
 	@Override
 	public synchronized void unsetLevel(final String name) {
-		doUnsetLevel(name);
+		julLoggingConfigurator.doUnsetLevel(name, loggers);
 	}
 
 	/**
@@ -145,7 +138,7 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	public synchronized void reset() {
 		Set<Logger> loggersCopy = new HashSet<>(this.loggers);
 		for (Logger logger : loggersCopy) {
-			doUnsetLevel(logger.getName());
+			julLoggingConfigurator.doUnsetLevel(logger.getName(), loggers);
 		}
 	}
 
@@ -162,8 +155,8 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 */
 	@Override
 	public void addJulKnownLoggers(String julKnownLoggers) {
-		Supplier<Scanner> supplier = () ->  new Scanner(julKnownLoggers);
-		updateJulKnownLoggers("JMX addJulKnownLoggers operation", supplier, false);
+		Supplier<Scanner> supplier = () -> new Scanner(julKnownLoggers);
+		julLoggingConfigurator.updateJulKnownLoggers("JMX addJulKnownLoggers operation", supplier, false, this.julKnownLoggers);
 	}
 
 	/**
@@ -172,84 +165,12 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	@Override
 	public void updateJulKnownLoggers(String julKnownLoggers) {
 		Supplier<Scanner> supplier = () ->  new Scanner(julKnownLoggers);
-		updateJulKnownLoggers("JMX addJulKnownLoggers operation", supplier, true);
+		julLoggingConfigurator.updateJulKnownLoggers("JMX addJulKnownLoggers operation", supplier, true, this.julKnownLoggers);
 	}
 
-	private Level parseLevel(final String level) {
-		try {
-			return Level.parse(level);
-		} catch (IllegalArgumentException e) {
-			if (julLevelMapping.containsKey(level.toUpperCase())) {
-				return julLevelMapping.get(level.toUpperCase());
-			} else {
-				throw new RuntimeException(String.format("%s cannot be mapped to a JUL level", level));
-			}
-		}
-	}
-
-	/**
-	 * Compare logger name against known JUL loggers to decide if change must be propagated to JUL.
-	 */
-	private boolean matchJulKnownLoggers(String loggerName) {
-		return julKnownLoggers.stream().anyMatch(loggerName::startsWith);
-	}
-
-	private void updateJulKnownLoggers(String updateSource, Supplier<Scanner> supplier, boolean reset) {
-		if (reset) {
-			LOGGER.info("Removing all JUL known loggers ({} items removed)", julKnownLoggers.size());
-			julKnownLoggers.clear();
-		}
-		LOGGER.info("Loading JUL known loggers from resource {}.", updateSource);
-		int i = 0;
-		try (Scanner scanner = supplier.get()) {
-			while (scanner.hasNextLine()) {
-				String line = scanner.nextLine();
-				if (!line.startsWith("#")) {
-					// remove trailing newline and any other leading and trailing whitespaces
-					String strippedLine = line.strip();
-					LOGGER.trace("Adding JUL known logger {}", strippedLine);
-					julKnownLoggers.add(strippedLine);
-					i++;
-				}
-			}
-		}
-		LOGGER.info("Loaded {} JUL known loggers.", i);
-	}
-
-	/**
-	 * Reset a managed logger state : handlers are removed, parent handlers usage is enabled, and level set to null.
-	 * Logger is removed from the list of managed loggers.
-	 * 
-	 * @param name a logger name. Required.
-	 */
-	private void doUnsetLevel(final String name) {
-		Logger logger = getLogger(name);
-		clearHandlers(logger);
-		logger.setUseParentHandlers(true);
-		logger.setLevel(null);
-		loggers.remove(logger);
-	}
-
-	/**
-	 * Remove all logger handlers.
-	 * 
-	 * @param name a logger name. Required.
-	 */
-	private void clearHandlers(Logger logger) {
-		for (Handler handler : logger.getHandlers()) {
-			logger.removeHandler(handler);
-		}
-	}
-
-	/**
-	 * Retrieve a logger from list of managed loggers, else retrieve it from JUL API.
-	 * 
-	 * @param name a logger name. Required.
-	 */
-	private Logger getLogger(final String name) {
-		return loggers.stream().filter(i -> i.getName().equals(name))
-				.findFirst()
-				.orElseGet(() -> Logger.getLogger(name));
+	// Used for unit tests
+	public Set<Logger> getLoggers() {
+		return loggers;
 	}
 
 }

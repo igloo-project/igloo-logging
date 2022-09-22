@@ -9,18 +9,16 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.LoggerConfig;
 
 import igloo.julhelper.api.JulLoggingManager;
+import igloo.log4j2jmx.jmx.Log4j2LoggingConfigurator.LevelWrapper;
 
 public class Log4j2LoggingManagerImpl implements Log4j2LoggingManager {
 
 	private final Optional<JulLoggingManager> julLoggingManager;
+
+	private final Log4j2LoggingConfigurator log4j2Logging;
 
 	private final Set<Logger> loggers = ConcurrentHashMap.newKeySet();
 
@@ -31,8 +29,13 @@ public class Log4j2LoggingManagerImpl implements Log4j2LoggingManager {
 	}
 
 	public Log4j2LoggingManagerImpl(JulLoggingManager julLoggingManager) {
+		this(julLoggingManager, new Log4j2LoggingConfigurator());
+	}
+
+	public Log4j2LoggingManagerImpl(JulLoggingManager julLoggingManager, Log4j2LoggingConfigurator log4j2Logging) {
 		super();
 		this.julLoggingManager = Optional.ofNullable(julLoggingManager);
+		this.log4j2Logging = log4j2Logging;
 	}
 
 	/**
@@ -70,10 +73,7 @@ public class Log4j2LoggingManagerImpl implements Log4j2LoggingManager {
 	 */
 	@Override
 	public synchronized void setLevel(final String name, final String level) {
-		Logger logger = doSetLevel(name, level);
-		Level log4jLevel = Level.valueOf(level);
-		logger.setLevel(log4jLevel);
-		((LoggerContext) LogManager.getContext(false)).updateLoggers();
+		log4j2Logging.doSetLevel(name, level, loggers, originalLevels);
 		julLoggingManager.ifPresent(m -> m.setLevelIfWellKnown(name, level));
 	}
 
@@ -82,7 +82,7 @@ public class Log4j2LoggingManagerImpl implements Log4j2LoggingManager {
 	 */
 	@Override
 	public synchronized void unsetLevel(final String name) {
-		doUnsetLevel(name);
+		log4j2Logging.doUnsetLevel(name, loggers, originalLevels);
 		julLoggingManager.ifPresent(m -> m.unsetLevel(name));
 	}
 
@@ -93,7 +93,7 @@ public class Log4j2LoggingManagerImpl implements Log4j2LoggingManager {
 	public synchronized void reset() {
 		Set<Logger> loggersCopy = new HashSet<>(this.loggers);
 		for (Logger logger : loggersCopy) {
-			doUnsetLevel(logger.getName());
+			log4j2Logging.doUnsetLevel(logger.getName(), loggers, originalLevels);
 			julLoggingManager.ifPresent(m -> m.unsetLevel(logger.getName()));
 		}
 	}
@@ -130,70 +130,9 @@ public class Log4j2LoggingManagerImpl implements Log4j2LoggingManager {
 		return julLoggingManager.isPresent();
 	}
 
-	private Logger doSetLevel(final String name, final String levelAsString) {
-		Logger logger = getLogger(name);
-		LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-		Configuration conf = ctx.getConfiguration();
-		LoggerConfig lconf = conf.getLoggerConfig(name);
-		Level originalLevel = lconf.getLevel();
-		if (levelAsString != null) {
-			if (!lconf.getName().equals(logger.getName())) {
-				lconf = new LoggerConfig(logger.getName(), Level.valueOf(levelAsString), true);
-				conf.addLogger(logger.getName(), lconf);
-			} else {
-				lconf.setLevel(Level.valueOf(levelAsString));
-			}
-			originalLevels.computeIfAbsent(name, (n) -> new LevelWrapper(originalLevel));
-		} else {
-			Level targetLevel = popOriginalLevel(name);
-			if (targetLevel == null) {
-				conf.removeLogger(name);
-			} else {
-				lconf.setLevel(targetLevel);
-			}
-		}
-		
-		ctx.updateLoggers(conf);
-		
-		if (levelAsString == null) {
-			loggers.remove(logger);
-		} else {
-			loggers.add(logger);
-		}
-		return logger;
-	}
-
-	private Level popOriginalLevel(final String name) {
-		if (originalLevels.containsKey(name)) {
-			return originalLevels.remove(name).level;
-		} else {
-			return null;
-		}
-	}
-
-	private void doUnsetLevel(final String name) {
-		doSetLevel(name, null);
-	}
-
-	private Logger getLogger(final String name) {
-		return loggers.stream().filter(i -> i.getName().equals(name))
-				.findFirst()
-				.orElseGet(() -> (Logger) LogManager.getLogger(name));
-	}
-
-	/**
-	 * This class allows to store null {@link Level} values in {@link Log4j2LoggingManagerImpl#loggers}.
-	 */
-	private static class LevelWrapper {
-		private final Level level;
-		
-		private LevelWrapper(Level level) {
-			this.level = level;
-		}
-		
-		private String name() {
-			return this.level != null ? this.level.name() : "NONE";
-		}
+	// Used for unit tests
+	public Set<Logger> getLoggers() {
+		return loggers;
 	}
 
 }
