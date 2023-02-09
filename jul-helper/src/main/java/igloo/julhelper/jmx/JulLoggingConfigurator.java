@@ -11,6 +11,8 @@ import java.util.logging.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import igloo.julhelper.exceptions.JulLevelMappingException;
+
 public class JulLoggingConfigurator {
 
 	private static final org.slf4j.Logger LOGGER = LoggerFactory.getLogger(JulLoggingConfigurator.class);
@@ -34,7 +36,7 @@ public class JulLoggingConfigurator {
 			if (julLevelMapping.containsKey(level.toUpperCase())) {
 				return julLevelMapping.get(level.toUpperCase());
 			} else {
-				throw new RuntimeException(String.format("%s cannot be mapped to a JUL level", level));
+				throw new JulLevelMappingException(String.format("%s cannot be mapped to a JUL level", level));
 			}
 		}
 	}

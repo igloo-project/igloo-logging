@@ -18,6 +18,8 @@
 			<artifactId>jul-helper-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
+		
+		<!-- we do not enforce a specific version -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>

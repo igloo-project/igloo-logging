@@ -9,6 +9,8 @@ public class JulLoggingManagerHolder {
 
 	private static JulLoggingManager instance;
 
+	private JulLoggingManagerHolder() {}
+
 	public static synchronized JulLoggingManager register(JulLoggingManager bean) {
 		JulLoggingManager previous = null;
 		if (instance != null) {

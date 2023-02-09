@@ -13,13 +13,21 @@
 	<artifactId>log4j2-jmx-helper</artifactId>
 
 	<dependencies>
-		<!-- Igloo -->
 		<dependency>
 			<groupId>org.iglooproject.components</groupId>
 			<artifactId>jul-helper-api</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		
+		<!-- must be added appropriately if needed -->
+		<dependency>
+			<groupId>org.iglooproject.components</groupId>
+			<artifactId>jul-helper</artifactId>
+			<version>${project.version}</version>
+			<optional>true</optional>
+		</dependency>
+		
+		<!-- we do not enforce a specific version -->
 		<dependency>
 			<groupId>javax.servlet</groupId>
 			<artifactId>javax.servlet-api</artifactId>

@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import javax.management.ObjectName;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
@@ -71,6 +72,8 @@ public class JulLoggingListener implements ServletContextListener {
 	private static final String PARAMETER_SKIP_JUL_JMX_HELPER = "skipJulJmxHelper";
 	private static final String PARAMETER_JUL_KNOWN_LOGGERS_RESOURCE_PATH = "julKnownLoggersResourcePath";
 
+	private ObjectName mbeanObjectName;
+
 	/**
 	 * @see JulLoggingListener
 	 */
@@ -88,7 +91,7 @@ public class JulLoggingListener implements ServletContextListener {
 		}
 		
 		if (!getBooleanParameter(sce, PARAMETER_SKIP_JUL_JMX_HELPER)) {
-			JulLoggingManagerMBean.registerMBean(julKnownLoggersResourcePath);
+			mbeanObjectName = JulLoggingManagerMBean.registerMBean(julKnownLoggersResourcePath);
 		}
 		
 		LOGGER.info("jul-to-slf4j installed");
@@ -109,7 +112,9 @@ public class JulLoggingListener implements ServletContextListener {
 	 */
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
-		// TODO: should we unregister JMX ?
+		if (mbeanObjectName != null) {
+			JulLoggingManagerMBean.unregisterMBean(mbeanObjectName);
+		}
 	}
 
 	/**

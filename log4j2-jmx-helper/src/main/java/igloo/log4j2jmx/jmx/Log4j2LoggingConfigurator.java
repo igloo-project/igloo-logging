@@ -33,7 +33,7 @@ public class Log4j2LoggingConfigurator {
 				lconf.setLevel(Level.valueOf(levelAsString));
 			}
 			// add the original level if not yet in local
-			originalLevels.computeIfAbsent(name, (n) -> new LevelWrapper(originalLevel));
+			originalLevels.computeIfAbsent(name, n -> new LevelWrapper(originalLevel));
 		// reset the logger level to default
 		} else {
 			Level targetLevel = popOriginalLevel(name, originalLevels);
