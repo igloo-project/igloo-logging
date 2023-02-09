@@ -1,0 +1,89 @@
+image:
+  name: maven:3.8-openjdk-11
+
+stages:
+ - build/analyze
+ - build/deploy/analyze
+
+variables:
+  DEPLOY: "false"
+  ANALYZE: "false"
+
+.build:
+  tags:
+    - docker
+  artifacts:
+    when: always
+    paths:
+      - "**/target/surefire-reports/TEST-*.xml"
+    reports:
+      junit:
+        - "**/target/surefire-reports/TEST-*.xml"
+  script:
+    - |
+      RED='\033[0;31m'
+      GREEN='\033[0;32m'
+      CYAN='\033[0;36m'
+      RESET='\033[0m'
+      if [ "$DEPLOY" == "true" ]; then
+        SECTION_NAME="Build / test / deploy"
+        echo -e "\e[0Ksection_start:`date +%s`:build[collapsed=true]\r\e[0K${CYAN}${SECTION_NAME}${RESET}"
+        mvn -U clean package deploy -DdeployAtEnd=true
+      else
+        SECTION_NAME="Build / test"
+        echo -e "\e[0Ksection_start:`date +%s`:build\r\e[0K${CYAN}${SECTION_NAME}${RESET}"
+        mvn -U clean package
+      fi
+      status=$?
+      echo -e "\e[0Ksection_end:`date +%s`:build\r\e[0K"
+      if [ $status -ne 0 ]; then
+        echo -e "${RED}${SECTION_NAME} failure${RESET}"
+        exit
+      else
+        echo -e "${GREEN}${SECTION_NAME} success${RESET}"
+      fi
+      if [ "$ANALYZE" == "true" ]; then
+        echo -e "\e[0Ksection_start:`date +%s`:analyze[collapsed=true]\r\e[0K${CYAN}Analyze${RESET}"
+        SONAR_OPTS=( "-Dsonar.host.url=https://sonar.tools.kobalt.fr" )
+        if [ "$CI_COMMIT_REF_NAME" != "master" -a "$CI_COMMIT_REF_NAME" != "main" ]; then
+          PROJECT_NAME="$( mvn -q help:evaluate -DforceStdout -Dexpression=project.name )"
+          PROJECT_ARTIFACT_ID="$( mvn -q help:evaluate -DforceStdout -Dexpression=project.artifactId )"
+          PROJECT_GROUP_ID="$( mvn -q help:evaluate -DforceStdout -Dexpression=project.groupId )"
+          SONAR_OPTS+=("-Dsonar.projectKey=$PROJECT_GROUP_ID:$PROJECT_ARTIFACT_ID:$CI_COMMIT_REF_NAME")
+          SONAR_OPTS+=("-Dsonar.projectName=$PROJECT_NAME ($CI_COMMIT_REF_NAME)")
+        fi
+        mvn sonar:sonar "${SONAR_OPTS[@]}"
+        status=$?
+        echo -e "\e[0Ksection_end:`date +%s`:analyze\r\e[0K"
+        if [ $status -ne 0 ]; then
+          echo -e "${RED}Analyze failure${RESET}"
+          exit
+        else
+          echo -e "${GREEN}Analyze success${RESET}"
+        fi
+      fi
+
+build/analyze:
+  stage: build/analyze
+  extends: .build
+  variables:
+    ANALYZE: "true"
+  except:
+    - /^master$/
+    - /^dev$/
+    - /^ft-.*-deploy$/
+    - /^rl-.*$/
+    - /^hf-.*$/
+
+build/deploy/analyze:
+  stage: build/deploy/analyze
+  extends: .build
+  variables:
+    DEPLOY: "true"
+    ANALYZE: "true"
+  only:
+    - /^master$/
+    - /^dev$/
+    - /^ft-.*-deploy$/
+    - /^rl-.*$/
+    - /^hf-.*$/
