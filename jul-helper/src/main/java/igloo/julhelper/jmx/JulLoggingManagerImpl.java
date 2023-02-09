@@ -57,6 +57,7 @@ public class JulLoggingManagerImpl implements JulLoggingManager {
 	 * 
 	 * @param julKnownLoggersResourcePath a resource path to load well-known JUL logger names. The resource must exists.
 	 *        Use null to skip well-known logger names loading.
+	 * @param julLoggingConfigurator {@link JulLoggingConfigurator} instance; used to perform JUL configuration.
 	 */
 	public JulLoggingManagerImpl(String julKnownLoggersResourcePath, JulLoggingConfigurator julLoggingConfigurator) {
 		super();

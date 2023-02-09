@@ -24,14 +24,14 @@ import igloo.log4j2jmx.jmx.Log4j2LoggingManagerMBean;
  * 
  * Commplete default setup :
  * 
- * ```xml
+ * <pre>{@code
  * <listener>
  *   <listener-class>igloo.julhelper.servlet.JulLoggingListener</listener-class>
  * </listener>
  * <listener>
  *   <listener-class>igloo.log4j2jmx.servlet.Log4j2LoggingManagerListener</listener-class>
  * </listener>
- * ```
+ * }</pre>
  * 
  * @see Log4j2LoggingManager
  */

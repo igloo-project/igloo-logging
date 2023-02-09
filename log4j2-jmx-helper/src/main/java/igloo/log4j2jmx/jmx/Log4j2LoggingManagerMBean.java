@@ -28,7 +28,9 @@ public class Log4j2LoggingManagerMBean extends StandardMBean {
 	/**
 	 * Register `igloo:type=LoggingManager,name=Log4j2LoggingManagerMBean`.
 	 * 
-	 * @seee {@link Log4j2LoggingManager}
+	 * @return Added MBean {@link ObjectName}.
+	 * 
+	 * @see Log4j2LoggingManager
 	 */
 	public static ObjectName registerMBean() {
 		final MBeanServer server = ManagementFactory.getPlatformMBeanServer();
