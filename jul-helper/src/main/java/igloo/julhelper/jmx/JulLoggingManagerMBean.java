@@ -18,8 +18,7 @@ import igloo.julhelper.api.JulLoggingManager;
 import igloo.julhelper.api.JulLoggingManagerHolder;
 
 /**
- * Implementation for {@link JulLoggingManager} MBean. All public methods are synchronized to ensure
- * {@link #loggers} consistency.
+ * MBean registration handling.
  */
 public class JulLoggingManagerMBean extends StandardMBean {
 
@@ -38,7 +37,9 @@ public class JulLoggingManagerMBean extends StandardMBean {
 	/**
 	 * Install `igloo:type=LoggingManager,name=JulLoggingManager` JMX MBean.
 	 * 
-	 * @param resource path used to load well-known JUL logger names. Use null to disable loading.
+	 * @param julKnownLogger path used to load well-known JUL logger names. Use null to disable loading.
+	 * @return added MBean {@link ObjectName}
+	 * 
 	 * @see JulLoggingManager
 	 */
 	public static ObjectName registerMBean(String julKnownLogger) {

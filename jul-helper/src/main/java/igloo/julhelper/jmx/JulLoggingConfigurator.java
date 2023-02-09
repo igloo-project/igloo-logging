@@ -43,11 +43,24 @@ public class JulLoggingConfigurator {
 
 	/**
 	 * Compare logger name against known JUL loggers to decide if change must be propagated to JUL.
+	 * 
+	 * @param loggerName logger name.
+	 * @param julKnownLoggers collection of JUL known logger names to match loggerName against.
+	 * 
+	 * @return true if loggerName match a given julKnownLoggers.
 	 */
 	public boolean matchJulKnownLoggers(String loggerName, Set<String> julKnownLoggers) {
 		return julKnownLoggers.stream().anyMatch(loggerName::startsWith);
 	}
 
+	/**
+	 * Update collection of JUL known loggers from a resource file.
+	 * 
+	 * @param updateSource resource name (used for logging).
+	 * @param supplier supplier JUL known loggers.
+	 * @param reset true if julKnownLoggers must be emptied before update.
+	 * @param julKnownLoggers collection to update.
+	 */
 	public void updateJulKnownLoggers(String updateSource, Supplier<Scanner> supplier, boolean reset, Set<String> julKnownLoggers) {
 		if (reset) {
 			LOGGER.info("Removing all JUL known loggers ({} items removed)", julKnownLoggers.size());
@@ -75,6 +88,7 @@ public class JulLoggingConfigurator {
 	 * Logger is removed from the list of managed loggers.
 	 * 
 	 * @param name a logger name. Required.
+	 * @param loggers list of managed loggers; updated to remove logger identified by name.
 	 */
 	public void doUnsetLevel(final String name, Set<Logger> loggers) {
 		Logger logger = getLogger(name, loggers);
@@ -87,7 +101,7 @@ public class JulLoggingConfigurator {
 	/**
 	 * Remove all logger handlers.
 	 * 
-	 * @param name a logger name. Required.
+	 * @param logger a Logger object. Required.
 	 */
 	private void clearHandlers(Logger logger) {
 		for (Handler handler : logger.getHandlers()) {
@@ -99,6 +113,7 @@ public class JulLoggingConfigurator {
 	 * Retrieve a logger from list of managed loggers, else retrieve it from JUL API.
 	 * 
 	 * @param name a logger name. Required.
+	 * @param loggers list of managed loggers; updated to remove logger identified by name.
 	 */
 	private Logger getLogger(final String name, Set<Logger> loggers) {
 		return loggers.stream().filter(i -> i.getName().equals(name))

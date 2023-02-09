@@ -28,11 +28,11 @@ variables:
       if [ "$DEPLOY" == "true" ]; then
         SECTION_NAME="Build / test / deploy"
         echo -e "\e[0Ksection_start:`date +%s`:build[collapsed=true]\r\e[0K${CYAN}${SECTION_NAME}${RESET}"
-        mvn -U clean package deploy -DdeployAtEnd=true
+        mvn -U clean package deploy -DdeployAtEnd=true -DperformRelease
       else
         SECTION_NAME="Build / test"
         echo -e "\e[0Ksection_start:`date +%s`:build\r\e[0K${CYAN}${SECTION_NAME}${RESET}"
-        mvn -U clean package
+        mvn -U clean package -DperformRelease
       fi
       status=$?
       echo -e "\e[0Ksection_end:`date +%s`:build\r\e[0K"

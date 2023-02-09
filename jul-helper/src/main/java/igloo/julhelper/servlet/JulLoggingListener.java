@@ -31,7 +31,7 @@ import igloo.julhelper.jmx.JulLoggingManagerMBean;
  * This listener can be added in `web.xml` by adding this extract among the first listeners (`context-param` may be
  * omitted if default values are convenient):
  * 
- * ```xml
+ * <pre>{@code
  * <listener>
  *   <listener-class>igloo.julhelper.servlet.JulLoggingListener</listener-class>
  * </listener>
@@ -43,7 +43,7 @@ import igloo.julhelper.jmx.JulLoggingManagerMBean;
  *   <param-name>skipJulJmxHelper</param-name>
  *   <param-value>false</param-value>
  * </context-param>
- * ```
+ * }</pre>
  * 
  * # About SLF4JBridgeHandler
  * 

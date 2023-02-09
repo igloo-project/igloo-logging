@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Attributes and operations provided by this MBean allow to reconfigure at runtime {@link SLF4JBridgeHandler}
+ * Attributes and operations provided by this MBean allow to reconfigure at runtime SLF4JBridgeHandler
  * and logger levels.
  * 
  * To enable a logger, use {@link JulLoggingManager#setLevel(String, String)} operation, and enable the corresponding
@@ -25,23 +25,21 @@ public interface JulLoggingManager {
 	List<String> getLoggerNames();
 
 	/**
-	 * Switch the logger `name` to `level`, add {@link SLF4JBridgeHandler} and disable parent handlers.
+	 * Switch the logger `name` to `level`, add SLF4JBridgeHandler and disable parent handlers.
 	 * 
 	 * @param name a logger name. Required.
 	 * @param level a JUL logging level (FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE, OFF). Only FINEST, FINE,
 	 *              INFO and WARNING levels are bound to SLF4J levels. Required.
-	 * @see SLF4JBridgeHandler
 	 */
 	void setLevel(String name, String level);
 
 	/**
-	 * Switch the logger `name` to `level`, add {@link SLF4JBridgeHandler} and disable parent handlers if logger
+	 * Switch the logger `name` to `level`, add SLF4JBridgeHandler and disable parent handlers if logger
 	 * is a JUL known logger (see {@link #getJulKnownLoggers()}.
 	 * 
 	 * @param name a logger name. Required.
 	 * @param level a JUL logging level (FINEST, FINER, FINE, CONFIG, INFO, WARNING, SEVERE, OFF). Only FINEST, FINE,
 	 *              INFO and WARNING levels are bound to SLF4J levels. Required.
-	 * @see SLF4JBridgeHandler
 	 */
 	void setLevelIfWellKnown(String name, String level);
 
@@ -60,7 +58,7 @@ public interface JulLoggingManager {
 	 * logger2.name=INFO
 	 * ```
 	 * 
-	 * @return
+	 * @return overrided configuration as a multiline string of loggerName=loggerLevel entries.
 	 */
 	String getLoggerConfig();
 
@@ -72,6 +70,8 @@ public interface JulLoggingManager {
 	/**
 	 * View current list of JUL known loggers; if a JulLoggingManager is available, logger's modification for
 	 * logger with a name starting by a JUL known logger name are propagated to JUL.
+	 * 
+	 * @return list of JUL known loggers.
 	 */
 	Set<String> getJulKnownLoggers();
 

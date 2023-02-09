@@ -39,13 +39,13 @@ public interface Log4j2LoggingManager {
 	/**
 	 * Print managed configuration as a string.
 	 * 
-	 * ```ini
+	 * <pre>{@code
 	 * logger.name=FINE (original: INFO/NONE)
 	 * logger2.name=INFO (original: WARN/NONE)
 	 * ...
-	 * ```
+	 * }</pre>
 	 * 
-	 * @return
+	 * @return Overriden configuration as a string.
 	 */
 	String getLoggerConfig();
 
@@ -55,6 +55,8 @@ public interface Log4j2LoggingManager {
 	void reset();
 
 	/**
+	 * @return list of JUL known loggers.
+	 * 
 	 * @see JulLoggingManager#getJulKnownLoggers()
 	 */
 	Set<String> getJulKnownLoggers();
