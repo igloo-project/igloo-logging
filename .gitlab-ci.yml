@@ -69,11 +69,12 @@ build/analyze:
   variables:
     ANALYZE: "true"
   except:
-    - /^master$/
-    - /^dev$/
-    - /^ft-.*-deploy$/
-    - /^rl-.*$/
-    - /^hf-.*$/
+    refs:
+      - main
+      - dev
+      - /^ft-.*-deploy$/
+      - /^rl-.*$/
+      - /^hf-.*$/
 
 build/deploy/analyze:
   stage: build/deploy/analyze
@@ -82,8 +83,9 @@ build/deploy/analyze:
     DEPLOY: "true"
     ANALYZE: "true"
   only:
-    - /^master$/
-    - /^dev$/
-    - /^ft-.*-deploy$/
-    - /^rl-.*$/
-    - /^hf-.*$/
+    refs:
+      - main
+      - dev
+      - /^ft-.*-deploy$/
+      - /^rl-.*$/
+      - /^hf-.*$/
