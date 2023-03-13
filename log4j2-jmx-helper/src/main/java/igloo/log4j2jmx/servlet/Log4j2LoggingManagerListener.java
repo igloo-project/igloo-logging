@@ -43,14 +43,16 @@ public class Log4j2LoggingManagerListener implements ServletContextListener {
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-		Log4j2LoggingManagerMBean.registerMBean();
+		mbeanObjectName = Log4j2LoggingManagerMBean.registerMBean();
 		
 		LOGGER.info("jul-to-slf4j installed");
 	}
 
 	@Override
 	public void contextDestroyed(ServletContextEvent sce) {
-		Log4j2LoggingManagerMBean.unregisterMBean(mbeanObjectName);
+		if (mbeanObjectName != null) {
+			Log4j2LoggingManagerMBean.unregisterMBean(mbeanObjectName);
+		}
 	}
 
 }
