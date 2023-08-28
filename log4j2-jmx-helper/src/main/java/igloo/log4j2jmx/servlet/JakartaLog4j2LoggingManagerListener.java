@@ -1,9 +1,9 @@
 package igloo.log4j2jmx.servlet;
 
-import javax.servlet.ServletContextEvent;
-import javax.servlet.ServletContextListener;
+import jakarta.servlet.ServletContextEvent;
+import jakarta.servlet.ServletContextListener;
 
-public class Log4j2LoggingManagerListener extends AbstractLog4j2LoggingManagerListener
+public class JakartaLog4j2LoggingManagerListener extends AbstractLog4j2LoggingManagerListener
 		implements ServletContextListener {
 	
 	@Override
@@ -15,5 +15,4 @@ public class Log4j2LoggingManagerListener extends AbstractLog4j2LoggingManagerLi
 	public void contextDestroyed(ServletContextEvent sce) {
 		super.contextDestroyed();
 	}
-
 }
