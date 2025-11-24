@@ -52,7 +52,7 @@ variables:
           SONAR_OPTS+=("-Dsonar.projectKey=$PROJECT_GROUP_ID:$PROJECT_ARTIFACT_ID:$CI_COMMIT_REF_NAME")
           SONAR_OPTS+=("-Dsonar.projectName=$PROJECT_NAME ($CI_COMMIT_REF_NAME)")
         fi
-        mvn sonar:sonar "${SONAR_OPTS[@]}"
+        mvn org.sonarsource.scanner.maven:sonar-maven-plugin:sonar "${SONAR_OPTS[@]}"
         status=$?
         echo -e "\e[0Ksection_end:`date +%s`:analyze\r\e[0K"
         if [ $status -ne 0 ]; then
