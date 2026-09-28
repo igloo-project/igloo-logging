@@ -44,7 +44,7 @@ variables:
       fi
       if [ "$ANALYZE" == "true" ]; then
         echo -e "\e[0Ksection_start:`date +%s`:analyze[collapsed=true]\r\e[0K${CYAN}Analyze${RESET}"
-        SONAR_OPTS=( "-Dsonar.host.url=https://sonar2.tools.kobalt.fr" -Dsonar.token="${SONAR_TOKEN}" )
+        SONAR_OPTS=( "-Dsonar.host.url=https://sonar.tools.kobalt.fr" -Dsonar.token="${SONAR_TOKEN}" )
         if [ "$CI_COMMIT_REF_NAME" != "master" -a "$CI_COMMIT_REF_NAME" != "main" ]; then
           PROJECT_NAME="$( mvn -q help:evaluate -DforceStdout -Dexpression=project.name )"
           PROJECT_ARTIFACT_ID="$( mvn -q help:evaluate -DforceStdout -Dexpression=project.artifactId )"
